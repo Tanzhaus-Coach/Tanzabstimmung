@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <!-- Barrierefreiheit: Zoom erlauben -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tanzabstimmung - Kursauswahl</title>
+    
+    <!-- OpenGraph Tags für WhatsApp Vorschau -->
+    <meta property="og:title" content="Tanzabstimmung - Wählt eure Favoriten!">
+    <meta property="og:description" content="Bitte stimmt ab, welche Tänze wir in der nächsten Stunde vertiefen sollen.">
+    <meta property="og:type" content="website">
+    
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* Spezifische Styles nur für die Startseite */
+        .courses-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+        .course-card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            text-decoration: none;
+            color: var(--text-color);
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 180px;
+        }
+        .course-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+            border-color: var(--primary-color);
+        }
+        .course-card i {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+        }
+        .course-card h3 {
+            font-size: 1.4rem;
+            margin-bottom: 10px;
+        }
+        .course-card span {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+        .loading-spinner {
+            text-align: center;
+            padding: 50px;
+            color: var(--text-light);
+            grid-column: 1 / -1; /* Spannt sich über alle Spalten */
+        }
+        .coach-link {
+            display: block;
+            text-align: center;
+            margin-top: 50px;
+            color: var(--text-light);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+        .coach-link:hover {
+            color: var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-music"></i> Tanzabstimmung</h1>
+            <p>Wählt euren Kurs aus, um über die Reihenfolge der Tänze abzustimmen.</p>
+        </header>
+
+        <div id="coursesGrid" class="courses-grid">
+            <div class="loading-spinner">
+                <i class="fas fa-spinner fa-spin"></i> Lade Kurse...
+            </div>
+        </div>
+
+        <a href="coach.html" class="coach-link"><i class="fas fa-lock"></i> Coach-Login</a>
+    </div>
+
+    <!-- WICHTIG: Reihenfolge der Skripte! -->
+    <!-- 1. Supabase SDK laden -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- 2. Unsere Config laden (nutzt das globale 'supabase' Objekt) -->
+    <script src="js/supabase-client.js"></script>
+    
+    <!-- 3. Logik für diese Seite -->
+    <script>
+        async function loadCourses() {
+            try {
+                const { data: courses, error } = await supabaseClient
+                    .from('courses')
+                    .select('id, name, dance_count')
+                    .order('name');
+                
+                if (error) throw error;
+
+                const grid = document.getElementById('coursesGrid');
+                
+                if (!courses || courses.length === 0) {
+                    grid.innerHTML = '<p style="text-align: center; color: var(--text-light); grid-column: 1/-1;">Aktuell sind keine Kurse verfügbar. Bitte erstelle einen im Coach-Dashboard!</p>';
+                    return;
+                }
+
+                grid.innerHTML = courses.map(course => `
+                    <a href="vote.html?course=${course.id}" class="course-card">
+                        <i class="fas fa-calendar-day"></i>
+                        <h3>${course.name}</h3>
+                        <span>${course.dance_count} Tänze zur Auswahl</span>
+                    </a>
+                `).join('');
+
+            } catch (error) {
+                console.error('Fehler beim Laden der Kurse:', error);
+                document.getElementById('coursesGrid').innerHTML = 
+                    '<p style="text-align: center; color: var(--danger-color); grid-column: 1/-1;">Fehler beim Laden der Kurse. Bitte später versuchen.</p>';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadCourses);
+    </script>
+</body>
+</html>
