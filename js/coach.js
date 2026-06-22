@@ -17,9 +17,12 @@ let pointsChart = null;
 const createCourseForm = document.getElementById('createCourseForm');
 const createDanceForm = document.getElementById('createDanceForm');
 
+// NEU: State für Edit-Modus
+let isEditingCourse = false;
+let editingCourseId = null;
+
 // Initialisierung
 async function initCoachDashboard() {
-    // Auth State Listener
     supabaseClient.auth.onAuthStateChange((event, session) => {
         if (event === 'SIGNED_IN') {
             showDashboard();
@@ -64,7 +67,7 @@ function setupEventListeners() {
     });
 
     evalCourseSelect.addEventListener('change', loadEvaluationData);
-    createCourseForm.addEventListener('submit', handleCreateCourse);
+    createCourseForm.addEventListener('submit', handleSaveCourse); // Umbenannt für Create & Update
     createDanceForm.addEventListener('submit', handleCreateDance);
 }
 
@@ -105,7 +108,10 @@ async function loadCoursesForAdmin() {
             list.innerHTML += `
                 <li>
                     <span><strong>${c.name}</strong> <small style="color: var(--text-light);">(ID: ${c.id})</small></span>
-                    <button class="delete-btn" onclick="deleteCourse('${c.id}')"><i class="fas fa-trash"></i></button>
+                    <div>
+                        <button class="edit-btn" onclick="startEditCourse('${c.id}', '${c.name.replace(/'/g, "\\'")}')"><i class="fas fa-edit"></i></button>
+                        <button class="delete-btn" onclick="deleteCourse('${c.id}')"><i class="fas fa-trash"></i></button>
+                    </div>
                 </li>`;
         });
     }
@@ -227,12 +233,13 @@ async function loadDancesForAdmin() {
     }
 }
 
-async function handleCreateCourse(e) {
+// NEU: Kombinierte Funktion für Erstellen und Bearbeiten
+async function handleSaveCourse(e) {
     e.preventDefault();
     let id = document.getElementById('newCourseId').value.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
     const name = document.getElementById('newCourseName').value.trim();
     
-    if (!id) {
+    if (!id && !isEditingCourse) {
         alert('Die Kurs-ID enthält keine gültigen Zeichen!');
         return;
     }
@@ -245,22 +252,86 @@ async function handleCreateCourse(e) {
         return;
     }
 
-    const { error: courseError } = await supabaseClient.from('courses').insert({
-        id: id,
-        name: name,
-        dance_count: danceIds.length
-    });
-
-    if (courseError) { alert('Fehler: ' + courseError.message); return; }
-
     const mappings = danceIds.map(dId => ({ course_id: id, dance_id: dId }));
-    const { error: mapError } = await supabaseClient.from('course_dances').insert(mappings);
 
-    if (mapError) { alert('Fehler bei Tänzen: ' + mapError.message); return; }
+    if (isEditingCourse) {
+        // --- UPDATE MODUS ---
+        const { error: courseError } = await supabaseClient
+            .from('courses')
+            .update({ name: name, dance_count: danceIds.length })
+            .eq('id', editingCourseId);
 
-    alert('Kurs erfolgreich erstellt!');
-    createCourseForm.reset();
+        if (courseError) { alert('Fehler: ' + courseError.message); return; }
+
+        // Alte Verknüpfungen löschen und neue setzen
+        await supabaseClient.from('course_dances').delete().eq('course_id', editingCourseId);
+        const { error: mapError } = await supabaseClient.from('course_dances').insert(mappings);
+
+        if (mapError) { alert('Fehler bei Tänzen: ' + mapError.message); return; }
+
+        alert('Kurs erfolgreich aktualisiert!');
+        cancelEdit();
+    } else {
+        // --- CREATE MODUS ---
+        const { error: courseError } = await supabaseClient.from('courses').insert({
+            id: id,
+            name: name,
+            dance_count: danceIds.length
+        });
+
+        if (courseError) { alert('Fehler: ' + courseError.message); return; }
+
+        const { error: mapError } = await supabaseClient.from('course_dances').insert(mappings);
+
+        if (mapError) { alert('Fehler bei Tänzen: ' + mapError.message); return; }
+
+        alert('Kurs erfolgreich erstellt!');
+        createCourseForm.reset();
+    }
+    
     loadAllAdminData();
+}
+
+// NEU: Edit-Modus starten
+window.startEditCourse = async function(id, name) {
+    isEditingCourse = true;
+    editingCourseId = id;
+    
+    // Formular füllen
+    document.getElementById('newCourseId').value = id;
+    document.getElementById('newCourseId').disabled = true; // ID nicht änderbar
+    document.getElementById('newCourseName').value = name;
+    
+    // Checkboxen resetten
+    document.querySelectorAll('#danceCheckboxes input').forEach(cb => cb.checked = false);
+    
+    // Aktuelle Tänze des Kurses laden und anhaken
+    const { data: mappings } = await supabaseClient.from('course_dances').select('dance_id').eq('course_id', id);
+    if (mappings) {
+        mappings.forEach(m => {
+            const cb = document.getElementById(`dance_${m.dance_id}`);
+            if (cb) cb.checked = true;
+        });
+    }
+    
+    // UI anpassen
+    createCourseForm.querySelector('button[type="submit"]').innerHTML = '<i class="fas fa-save"></i> Kurs aktualisieren';
+    createCourseForm.insertAdjacentHTML('beforeend', '<button type="button" id="cancelEditBtn" class="btn-reset" style="margin-left:10px;">Abbrechen</button>');
+    document.getElementById('cancelEditBtn').addEventListener('click', cancelEdit);
+    
+    // Scrollen
+    document.getElementById('newCourseId').scrollIntoView({ behavior: 'smooth' });
+}
+
+function cancelEdit() {
+    isEditingCourse = false;
+    editingCourseId = null;
+    createCourseForm.reset();
+    document.getElementById('newCourseId').disabled = false;
+    createCourseForm.querySelector('button[type="submit"]').innerHTML = 'Kurs erstellen';
+    const cancelBtn = document.getElementById('cancelEditBtn');
+    if (cancelBtn) cancelBtn.remove();
+    document.querySelectorAll('#danceCheckboxes input').forEach(cb => cb.checked = false);
 }
 
 async function handleCreateDance(e) {
@@ -309,7 +380,7 @@ window.exportToCSV = function() {
     }
     
     const csvString = csv.join('\n');
-    const blob = new Blob(["\uFEFF" + csvString], { type: 'text/csv;charset=utf-8;' }); // BOM für Excel Umlaute
+    const blob = new Blob(["\uFEFF" + csvString], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = `auswertung_${courseId}_${new Date().toISOString().slice(0,10)}.csv`;
