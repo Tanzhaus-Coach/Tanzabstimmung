@@ -21,34 +21,35 @@ const closeSuccessBtn = document.getElementById('closeSuccessBtn');
 const maxPointsSpan = document.getElementById('maxPoints');
 const progressLabel = document.getElementById('progressLabel');
 
-// Initialisierung
+// Initialisierung (mit detaillierter Fehlerausgabe)
 async function initialize() {
     try {
-        // 1. URL Parameter holen (?course=montag-19)
         const urlParams = new URLSearchParams(window.location.search);
         currentCourseId = urlParams.get('course');
 
         if (!currentCourseId) {
             courseNameTitle.textContent = 'Kein Kurs ausgewählt!';
-            window.location.href = 'index.html';
+            showStatus('Fehler: Keine Kurs-ID in der URL gefunden (z.B. ?course=xyz)', 'error');
             return;
         }
 
-        // 2. Anonymous Auth
+        // 1. Anonymous Auth
         const { data: authData, error: authError } = await supabaseClient.auth.signInAnonymously();
-        if (authError) throw authError;
+        if (authError) throw new Error('Auth-Fehler: ' + authError.message);
         currentUserId = authData.user.id;
 
-        // 3. Kursdaten und Tänze aus DB laden
+        // 2. Kursdaten laden
         await loadCourseData(currentCourseId);
 
-        // 4. Prüfen, ob dieses Gerät in diesem Kurs schon abgestimmt hat
-        const { data: existingVote } = await supabaseClient
+        // 3. Existierende Stimme prüfen
+        const { data: existingVote, error: voteError } = await supabaseClient
             .from('votes')
             .select('couple_name, ranking')
             .eq('course_id', currentCourseId)
             .eq('user_id', currentUserId)
             .maybeSingle();
+            
+        if (voteError) throw new Error('Stimmen-Abfrage Fehler: ' + voteError.message);
 
         if (existingVote) {
             coupleNameInput.value = existingVote.couple_name;
@@ -75,7 +76,8 @@ async function initialize() {
 
     } catch (error) {
         console.error('Initialisierung fehlgeschlagen:', error);
-        showStatus('Fehler beim Laden. Bitte Seite neu laden.', 'error');
+        // Zeigt den echten Fehler im UI an!
+        showStatus(error.message, 'error'); 
     }
 }
 
@@ -88,18 +90,19 @@ async function loadCourseData(courseId) {
             .eq('id', courseId)
             .single();
 
-        if (courseError) throw courseError;
+        // WICHTIG: Wenn der Kurs nicht gefunden wird, wirft .single() einen Fehler.
+        if (courseError) throw new Error('Kurs nicht gefunden: ' + courseError.message);
 
         courseNameTitle.textContent = course.name;
         currentCourseDanceCount = course.dance_count;
 
-        // 2. ROBUSTE METHODE: Erst die Verknüpfungen (IDs) laden...
+        // 2. Verknüpfungen laden
         const { data: mappings, error: mapError } = await supabaseClient
             .from('course_dances')
             .select('dance_id')
             .eq('course_id', courseId);
 
-        if (mapError) throw mapError;
+        if (mapError) throw new Error('Verknüpfungs-Fehler: ' + mapError.message);
         
         if (!mappings || mappings.length === 0) {
             availableDances = [];
@@ -110,13 +113,13 @@ async function loadCourseData(courseId) {
 
         const danceIds = mappings.map(m => m.dance_id);
 
-        // ...dann die echten Tanz-Daten anhand der IDs laden.
+        // 3. Tanz-Daten laden
         const { data: dances, error: dancesError } = await supabaseClient
             .from('dances')
             .select('id, name, icon')
             .in('id', danceIds);
 
-        if (dancesError) throw dancesError;
+        if (dancesError) throw new Error('Tänze-Fehler: ' + dancesError.message);
 
         availableDances = dances.map(d => ({
             id: d.id,
@@ -124,15 +127,13 @@ async function loadCourseData(courseId) {
             icon: d.icon || 'fa-music'
         }));
 
-        // Maximalpunkte dynamisch auf die echte Anzahl setzen
         maxPointsSpan.textContent = availableDances.length;
-
         renderAvailableDances();
 
     } catch (error) {
         console.error('Fehler beim Laden der Kursdaten:', error);
-        // Detaillierte Fehlermeldung hilft beim Debuggen
-        showStatus('Fehler: ' + error.message, 'error'); 
+        // Wirft den Fehler an initialize() weiter, damit er im UI landet
+        throw error; 
     }
 }
 
