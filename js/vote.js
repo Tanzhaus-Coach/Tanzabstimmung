@@ -81,6 +81,7 @@ async function initialize() {
 
 async function loadCourseData(courseId) {
     try {
+        // 1. Kursname abrufen
         const { data: course, error: courseError } = await supabaseClient
             .from('courses')
             .select('name, dance_count')
@@ -91,26 +92,47 @@ async function loadCourseData(courseId) {
 
         courseNameTitle.textContent = course.name;
         currentCourseDanceCount = course.dance_count;
-        maxPointsSpan.textContent = course.dance_count;
 
-        const { data: dances, error: dancesError } = await supabaseClient
+        // 2. ROBUSTE METHODE: Erst die Verknüpfungen (IDs) laden...
+        const { data: mappings, error: mapError } = await supabaseClient
             .from('course_dances')
-            .select('dances(id, name, icon)')
+            .select('dance_id')
             .eq('course_id', courseId);
+
+        if (mapError) throw mapError;
+        
+        if (!mappings || mappings.length === 0) {
+            availableDances = [];
+            renderAvailableDances();
+            showStatus('Dieser Kurs hat noch keine Tänze zugewiesen.', 'error');
+            return;
+        }
+
+        const danceIds = mappings.map(m => m.dance_id);
+
+        // ...dann die echten Tanz-Daten anhand der IDs laden.
+        const { data: dances, error: dancesError } = await supabaseClient
+            .from('dances')
+            .select('id, name, icon')
+            .in('id', danceIds);
 
         if (dancesError) throw dancesError;
 
-        availableDances = dances.map(item => ({
-            id: item.dances.id,
-            name: item.dances.name,
-            icon: item.dances.icon || 'fa-music'
+        availableDances = dances.map(d => ({
+            id: d.id,
+            name: d.name,
+            icon: d.icon || 'fa-music'
         }));
+
+        // Maximalpunkte dynamisch auf die echte Anzahl setzen
+        maxPointsSpan.textContent = availableDances.length;
 
         renderAvailableDances();
 
     } catch (error) {
         console.error('Fehler beim Laden der Kursdaten:', error);
-        showStatus('Kursdaten konnten nicht geladen werden.', 'error');
+        // Detaillierte Fehlermeldung hilft beim Debuggen
+        showStatus('Fehler: ' + error.message, 'error'); 
     }
 }
 
