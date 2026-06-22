@@ -83,3 +83,52 @@
 .edit-btn:hover { 
     background: #e0e7ff; 
 }
+
+/* ========================================= */
+/* DARK MODE FÜR COACH DASHBOARD             */
+/* ========================================= */
+@media (prefers-color-scheme: dark) {
+    .auth-card, .card {
+        background: var(--card-bg);
+        color: var(--text-color);
+    }
+    .admin-form {
+        background: #0f172a;
+        border-color: var(--border-color);
+    }
+    .form-group input, .form-group select {
+        background: #0f172a;
+        color: var(--text-color);
+        border-color: var(--border-color);
+    }
+    .checkbox-grid {
+        background: #0f172a;
+        border-color: var(--border-color);
+    }
+    
+    /* Tabellen */
+    .data-table th {
+        background: #0f172a;
+        color: var(--text-color);
+    }
+    .data-table td {
+        color: var(--text-color);
+    }
+    .data-table tr:hover {
+        background: #334155;
+    }
+    
+    /* Highlights für Top 3 im Dark Mode anpassen */
+    .highlight-1 { background: #78350f !important; color: #fde68a; } /* Gold */
+    .highlight-2 { background: #312e81 !important; color: #c7d2fe; } /* Silber */
+    .highlight-3 { background: #7c2d12 !important; color: #fed7aa; } /* Bronze */
+    
+    .error-text {
+        color: #f87171;
+    }
+    
+    /* Hover-Effekte für Buttons */
+    .delete-btn:hover, .edit-btn:hover {
+        background: #334155;
+    }
+}
