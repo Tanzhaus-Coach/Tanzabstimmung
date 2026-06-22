@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coach Dashboard - Tanzabstimmung</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/coach.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js für die Diagramme -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- LOGIN BEREICH -->
+    <div id="loginSection" class="auth-container">
+        <div class="auth-card">
+            <h2><i class="fas fa-lock"></i> Coach Login</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="email">E-Mail</label>
+                    <input type="email" id="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Passwort</label>
+                    <input type="password" id="password" required>
+                </div>
+                <button type="submit" class="btn-primary full-width">Einloggen</button>
+                <p id="loginError" class="error-text"></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- DASHBOARD BEREICH (Versteckt bis Login) -->
+    <div id="dashboardSection" class="dashboard-container" style="display: none;">
+        <header class="dashboard-header">
+            <h1><i class="fas fa-chart-line"></i> Coach Dashboard</h1>
+            <button id="logoutBtn" class="btn-reset"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        </header>
+
+        <!-- Tab Navigation -->
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="evaluation"><i class="fas fa-poll"></i> Auswertung</button>
+            <button class="tab-btn" data-tab="courses"><i class="fas fa-list-alt"></i> Kurse</button>
+            <button class="tab-btn" data-tab="dances"><i class="fas fa-music"></i> Tänze</button>
+        </div>
+
+        <!-- TAB 1: AUSWERTUNG -->
+        <div id="evaluation" class="tab-content active">
+            <div class="card">
+                <div class="eval-controls" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                    <div style="display:flex; gap:15px; align-items:center;">
+                        <label for="evalCourseSelect">Kurs auswerten:</label>
+                        <select id="evalCourseSelect">
+                            <option value="">-- Kurs wählen --</option>
+                        </select>
+                    </div>
+                    <button onclick="exportToCSV()" class="btn-primary">
+                        <i class="fas fa-file-csv"></i> Als CSV exportieren
+                    </button>
+                </div>
+                
+                <div id="evalResults" style="display: none;">
+                    <h3>Gesamtpunkte (Aggregiert)</h3>
+                    <div class="chart-container">
+                        <canvas id="pointsChart"></canvas>
+                    </div>
+                    
+                    <h3 style="margin-top: 30px;">Detail-Auswertung der Paare</h3>
+                    <div class="table-responsive">
+                        <table id="votesTable" class="data-table">
+                            <thead></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: KURSVERWALTUNG -->
+        <div id="courses" class="tab-content">
+            <div class="card">
+                <h3>Neuen Kurs anlegen</h3>
+                <form id="createCourseForm" class="admin-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Kurs-ID (für URL)</label>
+                            <input type="text" id="newCourseId" placeholder="z.B. montag-19" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Anzeigename</label>
+                            <input type="text" id="newCourseName" placeholder="z.B. Montagskurs 19 Uhr" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Tänze für diesen Kurs auswählen:</label>
+                        <div id="danceCheckboxes" class="checkbox-grid"></div>
+                    </div>
+                    <button type="submit" class="btn-primary">Kurs erstellen</button>
+                </form>
+
+                <h3 style="margin-top: 40px;">Existierende Kurse</h3>
+                <ul id="coursesList" class="admin-list"></ul>
+            </div>
+        </div>
+
+        <!-- TAB 3: TANZVERWALTUNG -->
+        <div id="dances" class="tab-content">
+            <div class="card">
+                <h3>Neuen Tanz hinzufügen</h3>
+                <form id="createDanceForm" class="admin-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Name des Tanzes</label>
+                            <input type="text" id="newDanceName" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Icon (FontAwesome Klasse)</label>
+                            <input type="text" id="newDanceIcon" placeholder="fa-music" value="fa-music">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-primary">Tanz speichern</button>
+                </form>
+
+                <h3 style="margin-top: 40px;">Alle Tänze in der Datenbank</h3>
+                <ul id="dancesList" class="admin-list"></ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/coach.js"></script>
+</body>
+</html>
