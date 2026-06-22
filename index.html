@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <style>
+        <style>
         /* Spezifische Styles nur für die Startseite */
         .courses-grid {
             display: grid;
@@ -23,14 +23,15 @@
             margin-top: 30px;
         }
         .course-card {
-            background: white;
+            /* FIX: Nutzt die Variable statt hartcodiertem 'white' */
+            background: var(--card-bg); 
             padding: 30px;
             border-radius: 15px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             text-decoration: none;
             color: var(--text-color);
             transition: all 0.3s ease;
-            border: 2px solid transparent;
+            border: 2px solid var(--border-color); /* Leichter Rand hilft im Dark Mode */
             text-align: center;
             display: flex;
             flex-direction: column;
@@ -40,7 +41,8 @@
         }
         .course-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+            /* Etwas stärkerer Schatten, damit es im Dark Mode "poppt" */
+            box-shadow: 0 15px 30px rgba(0,0,0,0.3); 
             border-color: var(--primary-color);
         }
         .course-card i {
@@ -51,6 +53,8 @@
         .course-card h3 {
             font-size: 1.4rem;
             margin-bottom: 10px;
+            /* FIX: Erzwingt die Textfarbe für die Überschrift */
+            color: var(--text-color); 
         }
         .course-card span {
             color: var(--text-light);
@@ -60,7 +64,7 @@
             text-align: center;
             padding: 50px;
             color: var(--text-light);
-            grid-column: 1 / -1; /* Spannt sich über alle Spalten */
+            grid-column: 1 / -1;
         }
         .coach-link {
             display: block;
