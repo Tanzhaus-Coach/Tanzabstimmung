@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tanzabstimmung</title>
+    
+    <!-- OpenGraph Tags für WhatsApp Vorschau -->
+    <meta property="og:title" content="Tanzabstimmung - Wählt eure Favoriten!">
+    <meta property="og:description" content="Bitte stimmt ab, welche Tänze wir in der nächsten Stunde vertiefen sollen.">
+    <meta property="og:type" content="website">
+    
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a href="index.html" class="back-btn"><i class="fas fa-arrow-left"></i> Zur Kursübersicht</a>
+            <h1><i class="fas fa-music"></i> Tanzabstimmung</h1>
+            <h2 id="courseName" class="course-title">Kurs wird geladen...</h2>
+        </header>
+
+        <div class="couple-input-section">
+            <h3><i class="fas fa-user-friends"></i> Euer Paarname</h3>
+            <div class="input-group">
+                <input type="text" id="coupleName" placeholder="z.B. Max & Eva" maxlength="50" aria-label="Paarname eingeben">
+                <button id="saveNameBtn" class="btn-primary">
+                    <i class="fas fa-save"></i> Speichern
+                </button>
+            </div>
+            <div id="nameStatus" class="status-message" role="alert"></div>
+        </div>
+
+        <div class="voting-container">
+            <div class="available-dances">
+                <h3><i class="fas fa-list"></i> Verfügbare Tänze</h3>
+                <p class="hint">Tippt auf einen Tanz, um ihn hinzuzufügen.</p>
+                <div id="availableDances" class="dance-grid" aria-label="Verfügbare Tänze"></div>
+            </div>
+
+            <div class="selected-dances">
+                <h3><i class="fas fa-trophy"></i> Eure Top-Liste</h3>
+                <div class="ranking-info">
+                    <span class="rank-label" id="progressLabel">0 / 0 Tänze ausgewählt</span>
+                    <span class="rank-label">Platz 1 bekommt <span id="maxPoints">0</span> Punkte</span>
+                </div>
+                <div id="selectedDances" class="ranking-list" aria-label="Eure Rangliste"></div>
+                <div class="ranking-actions">
+                    <button id="submitVoteBtn" class="btn-submit" disabled>
+                        <i class="fas fa-check-circle"></i> Abstimmung abgeben
+                    </button>
+                    <button id="resetBtn" class="btn-reset">
+                        <i class="fas fa-redo"></i> Zurücksetzen
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="voteSuccess" class="success-modal" role="dialog" aria-modal="true" aria-labelledby="successTitle">
+            <div class="modal-content">
+                <i class="fas fa-check-circle"></i>
+                <h3 id="successTitle">Abstimmung gespeichert!</h3>
+                <p>Eure Stimme wurde erfolgreich erfasst.</p>
+                <button id="closeSuccessBtn" class="btn-primary">Schließen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 1. Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- 2. Sortable.js für Touch-Drag-and-Drop -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <!-- 3. Unsere Config -->
+    <script src="js/supabase-client.js"></script>
+    <!-- 4. Die Logik für diese Seite -->
+    <script src="js/vote.js"></script>
+</body>
+</html>
