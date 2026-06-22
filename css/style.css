@@ -89,3 +89,71 @@ input[type="text"] { flex: 1; padding: 12px 15px; border: 2px solid var(--border
     .couple-input-section, .available-dances, .selected-dances { padding: 20px; }
     .dance-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
 }
+
+/* ========================================= */
+/* DARK MODE (Automatische System-Anpassung) */
+/* ========================================= */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg-color: #0f172a; /* Dunkles Blau-Grau */
+        --card-bg: #1e293b;
+        --text-color: #f1f5f9;
+        --text-light: #94a3b8;
+        --border-color: #334155;
+    }
+
+    body {
+        background: var(--bg-color);
+        color: var(--text-color);
+    }
+
+    /* Karten & Container */
+    .couple-input-section, 
+    .available-dances, 
+    .selected-dances, 
+    .modal-content {
+        background: var(--card-bg);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    }
+
+    input[type="text"] {
+        background: #0f172a;
+        color: var(--text-color);
+        border-color: var(--border-color);
+    }
+    input[type="text"]::placeholder {
+        color: var(--text-light);
+    }
+
+    /* Tanzkarten */
+    .dance-card {
+        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        color: var(--text-color);
+    }
+    .dance-card.selected {
+        background: linear-gradient(135deg, #064e3b 0%, #065f46 100%);
+    }
+    .dance-card i, .dance-card h4 {
+        color: var(--text-color);
+    }
+
+    /* Ranking Liste */
+    .ranking-item {
+        background: #0f172a;
+        color: var(--text-color);
+    }
+
+    /* Status & Modal */
+    .status-message.success { background: #064e3b; color: #6ee7b7; }
+    .status-message.error { background: #7f1d1d; color: #fca5a5; }
+    
+    .success-modal {
+        background: rgba(0,0,0,0.85);
+    }
+    
+    /* Startseite (Kurs-Karten) */
+    .course-card {
+        background: var(--card-bg);
+        color: var(--text-color);
+    }
+}
