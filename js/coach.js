@@ -156,6 +156,11 @@ function renderChart(data) {
     const labels = sorted.map(item => item[0]);
     const values = sorted.map(item => item[1]);
 
+    // NEU: Prüfen, ob das System im Dark Mode läuft
+    const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const textColor = isDarkMode ? '#f1f5f9' : '#1e293b';
+    const gridColor = isDarkMode ? '#334155' : '#e2e8f0';
+
     if (pointsChart) pointsChart.destroy();
 
     pointsChart = new Chart(ctx, {
@@ -172,7 +177,22 @@ function renderChart(data) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            scales: { y: { beginAtZero: true } }
+            scales: { 
+                y: { 
+                    beginAtZero: true,
+                    ticks: { color: textColor },
+                    grid: { color: gridColor }
+                },
+                x: {
+                    ticks: { color: textColor },
+                    grid: { display: false }
+                }
+            },
+            plugins: {
+                legend: {
+                    labels: { color: textColor }
+                }
+            }
         }
     });
 }
